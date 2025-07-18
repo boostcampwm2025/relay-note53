@@ -6,6 +6,9 @@
 
 > **나를 챙기는 작은 실천, 부스트캠프에서 시작합니다.**
 
+<img width="1536" height="1024" alt="image" src="https://github.com/user-attachments/assets/cc7f6f75-076a-4eae-b71d-69bae28abc32" />
+
+
 ---
 
 ## 🧭 릴레이 프로젝트 소개
