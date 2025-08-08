@@ -201,4 +201,92 @@
 
 선택 이유: 개발을 진행하면서 프롬프트를 어떻게 작성하느냐에 따라 AI의 답변이 달라진다는 점을 확인하고 싶었습니다. 그리고 프롬프트를 추천받아 각 AI에 사용하면 더 좋은 답변을 받아낼 수 있을 것이라고 생각하면 향후 효율적인 개발을 진행할 수 있을 것이라고 생각하여 선택하게 되었습니다.
 
+<details>
+<summary>수행결과</summary>
+
+## 질문 프롬프트
+
+```bash
+내가 이런 질문을 하려는데, 프롬프트를 어떻게 써야 더 좋고 자세한 답변을 받을 수 있을까요?  
+
+이렇게 벡터 데이터베이스에 대한 코드 파일과 리드미 등의 파일이 있습니다. CPU 사용률, 메모리 사용과 관련해서 분석할 수 있는 방법과 개선이 필요한 점에 대해서 설명해주세요.
+```
+## 답변 결과
+
+- **목적 중심 프롬프트**
+    - **예시**
+      ```
+      내가 구현한 벡터 데이터베이스 CLI 프로그램이 있습니다. 이 프로그램의 CPU 사용률과 메모리 사용량을 측정하고 분석하려고 합니다. 
+        1. 어떤 Swift 기반 프로파일링 도구나 방법을 사용할 수 있을까요?
+        2. 분석 결과에서 어떤 부분이 병목일 가능성이 높을까요?
+        3. 코드나 구조를 어떻게 개선할 수 있을까요?
+
+        첨부된 파일은 실제 구현 코드와 학습 기록, 요구사항이 담긴 문서들입니다.
+      ```
+
+- **코드 분석 유도 프롬프트**
+    - **예시**
+      ```
+      첨부된 Swift 코드(main.swift, TokenVector.swift, Similarity.swift 등)는 벡터 기반 추천 시스템을 구현한 것입니다.
+      - `averageTokenVector`, `cosineSimilarity`, SQLite 저장 및 검색 기능이 핵심입니다.
+      이 코드에서 CPU나 메모리 사용이 높은 부분을 추론하고, 최적화가 필요한 지점을 지적해줄 수 있나요?
+
+      ```
+
+- **성능 진단 중심 프롬프트**
+    - **예시**
+      ```
+      제 프로젝트는 사용자 입력을 기반으로 벡터를 생성하고, SQLite에 저장된 장소들과 유사도를 비교하여 추천하는 CLI 기반 시스템입니다.
+      - CPU 사용률과 메모리 사용률을 진단하고 싶습니다.
+      - 어떤 방식으로 성능 측정을 시도해볼 수 있나요? Instruments 사용법이나 Swift 코드로 가능한 방법이 있을까요?
+      - 분석 후 병목 지점(예: 임베딩, 유사도 계산, DB 접근 등)을 최적화하는 전략을 추천해 주세요.
+      ```
+
+## 실행 결과
+```
+제가 만든 벡터 DB CLI 앱의 성능 개선을 위해, 기존 동작과 최적화 후 동작을 테스트 코드로 비교하려고 합니다.
+1. CPU/메모리 사용량을 측정할 수 있는 테스트 코드를 Swift로 어떻게 작성할 수 있을까요?
+2. 개선 전/후로 어떤 지표를 비교해야 의미 있는 결과가 될까요?
+```
+
+## ✅ 1. CPU/메모리 사용량을 측정할 수 있는 Swift 테스트 코드 작성법
+- Swift에서는 기본적으로 XCTest와 함께 성능 측정을 위한 measure 블록을 사용할 수 있고,
+- 좀 더 정밀한 메모리/CPU 측정을 원한다면 Instruments 도구를 병행하는 것이 가장 효과적입니다.
+
+### 🧪 A. XCTest 기반 성능 측정 코드 예시
+```swift
+import XCTest
+@testable import YourModuleName
+
+final class VectorDBPerformanceTests: XCTestCase {
+
+    func testSimilarityPerformance() {
+        // 더미 벡터 데이터 100개 준비
+        let db = VectorDB(path: ":memory:")
+        for i in 0..<100 {
+            db.insertPlace(name: "Test\(i)", address: "Some Address \(i)", vector: Array(repeating: Double(i), count: 300))
+        }
+
+        let query = Array(repeating: 1.0, count: 300)
+
+        measure {
+            _ = db.fetchAllPlaces().map { cosineSimilarity($0.2, query) }
+        }
+    }
+}
+```
+🔍 measure 블록은 실행 시간과 반복 횟수 등을 통계적으로 측정합니다.
+- 하지만 CPU/메모리 자원 사용량 자체는 이 방식으로는 제한적입니다.
+
+### 🧰 B. Instruments로 CPU / Memory 프로파일링하기 (Xcode GUI)
+1) Xcode → Product > Profile (⌘I)
+2) Instruments 실행 후, 아래 중 선택:
+    - Time Profiler: CPU 사용 시간, 함수 호출 추적
+    - Allocations: 메모리 할당 추적
+    - Leaks: 누수 검사
+3) runCLI() 또는 주요 벡터 처리 함수의 성능을 실시간으로 분석
+➡️ CLI 기반 프로젝트라도 Instruments는 잘 작동합니다. swift run으로 실행한 후 Instruments에서 attach 하면 됩니다.
+
+</details>
+
 ---
